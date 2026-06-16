@@ -6,6 +6,9 @@ on:
       - main
   workflow_dispatch:
 
+permissions:
+  contents: write
+
 jobs:
   build:
     runs-on: windows-latest
@@ -33,3 +36,11 @@ jobs:
         name: PolyRemote-Executable
         path: dist/PolyRemote.exe
 
+    - name: Create Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: v1.0.${{ github.run_number }}
+        name: Build v1.0.${{ github.run_number }}
+        body: |
+          Build automático desde commit ${{ github.sha }}
+        files: dist/PolyRemote.exe
