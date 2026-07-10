@@ -2,6 +2,7 @@ import tkinter as tk
 from tkinter import filedialog, messagebox
 import os
 import subprocess
+import shutil
 
 # Archivo donde se almacenarán los ejecutables y sus rutas
 DATABASE_FILE = "executables.txt"
@@ -21,8 +22,17 @@ def load_steam_library_path():
         if POLY_ROOT:
             # Comprobar si Polygunners está instalado
             polygunners_path = os.path.join(POLY_ROOT, "Polygunners")
+            polygunners_bak_path = os.path.join(POLY_ROOT, "Polygunners_bak")
             if os.path.exists(polygunners_path):
-                messagebox.showinfo("Éxito", "Polygunners encontrado.")
+                # Si ya existe Polygunners_bak, lo borramos primero
+                if os.path.exists(polygunners_bak_path):
+                    if os.path.islink(polygunners_bak_path):
+                        os.remove(polygunners_bak_path)
+                    else:
+                        shutil.rmtree(polygunners_bak_path)
+                # Renombrar Polygunners a Polygunners_bak
+                os.rename(polygunners_path, polygunners_bak_path)
+                messagebox.showinfo("Éxito", "Polygunners encontrado, renombrando a Polygunners_bak.")
             else:
                 install_polygunners()
             with open(STEAM_LIBRARY_PATH_FILE, "w") as file:
@@ -43,8 +53,15 @@ def install_polygunners():
         
         # Renombrar la carpeta una vez que se haya ejecutado el juego
         polygunners_path = os.path.join(POLY_ROOT, "Polygunners")
+        polygunners_bak_path = os.path.join(POLY_ROOT, "Polygunners_bak")
         if os.path.exists(polygunners_path):
-            os.rename(polygunners_path, os.path.join(POLY_ROOT, "Polygunners_bak"))
+            # Si ya existe Polygunners_bak, lo borramos primero
+            if os.path.exists(polygunners_bak_path):
+                if os.path.islink(polygunners_bak_path):
+                    os.remove(polygunners_bak_path)
+                else:
+                    shutil.rmtree(polygunners_bak_path)
+            os.rename(polygunners_path, polygunners_bak_path)
             messagebox.showinfo("Éxito", "Polygunners ha sido renombrado a Polygunners_bak.")
         else:
             messagebox.showerror("Error", "No se encontró la carpeta de Polygunners después de la instalación.")
@@ -80,10 +97,10 @@ def add_executable():
         save_executables(executables)
         update_listbox()
         
-        # Verificar si ya existe un softlink "Polygunners.exe"
+        # Borrar cualquier symlink viejo a Polygunners en la carpeta del ejecutable
         exe_symlink = os.path.join(exe_dir, "Polygunners.exe")
-        if not os.path.exists(exe_symlink):
-            os.system(f'mklink "{exe_symlink}" "{os.path.join(exe_dir, exe_name)}"')
+        if os.path.exists(exe_symlink):
+            os.remove(exe_symlink)
 
 # Función para quitar un ejecutable
 def remove_executable():
